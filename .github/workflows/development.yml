@@ -85,7 +85,7 @@ jobs:
           pr_title: "Pull Request From Github Action"
   
   # "notify" workflow for slack notification
-  notify:
+  notify_slack:
     runs-on: ubuntu-latest
     # Only run this workflow when "build" workflow succeeds
     needs: publish-uipath-nuget-package
