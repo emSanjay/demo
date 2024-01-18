@@ -88,10 +88,10 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     # Only run this workflow when "build" workflow succeeds
-    needs: [ publish-uipath-nuget-package]
+    needs: publish-uipath-nuget-package
     # Only run this workflow if it target is main branch on pull_request event
     steps:
-    - name: Notify Success to Slack
+    - name: Notify on Slack
       if: success()
       run: |
         curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created."}' ${{ secrets.SLACK_WEBHOOK_URL }}
