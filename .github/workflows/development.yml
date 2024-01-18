@@ -81,6 +81,7 @@ jobs:
         with:
           destination_branch: "main"
           github_token: ${{ secrets.UGITHUB_TOKEN }}
+          github_token: ${{ secrets.UGITHUB_TOKEN }}
           pr_label: "feature, automated pr"
           pr_title: "Pull Request From Github Action"
   
