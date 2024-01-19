@@ -71,18 +71,34 @@ jobs:
    
   # Create Pull Request for Merge & Review
   create-pull-request:
-    needs: publish-uipath-nuget-package
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v2
-      - name: pull-request
-        uses: repo-sync/pull-request@v2
-        with:
-          destination_branch: "main"
-          github_token: ${{ secrets.UGITHUB_TOKEN }}
-          pr_label: "feature, automated pr"
-          pr_title: "Pull Request From Github Action"
+          runs-on: ubuntu-latest
+          needs: publish-uipath-nuget-package
+          steps:
+            - name: Check out repository code
+              uses: actions/checkout@v2
+
+            - name: Create Pull Request
+              run: |
+                GITHUB_TOKEN="${{ secrets.UGITHUB_TOKEN }}"
+                BASE_BRANCH="main"
+                HEAD_BRANCH="development"
+                PR_TITLE="Pull Request From Github Action"
+                PR_BODY="Automated pull request created by GitHub Actions"
+
+                # Create a pull request using GitHub API
+                curl -X POST \
+                  -H "Authorization: token $GITHUB_TOKEN" \
+                  -H "Accept: application/vnd.github.v3+json" \
+                  https://api.github.com/repos/${{ github.repository }}/pulls \
+                  -d @- <<EOF
+                {
+                  "title": "$PR_TITLE",
+                  "body": "$PR_BODY",
+                  "head": "$HEAD_BRANCH",
+                  "base": "$BASE_BRANCH"
+                }
+                EOF
+
   
   # "notify" workflow for slack notification
   notify_slack:
@@ -94,4 +110,4 @@ jobs:
     - name: Notify on Slack
       if: success()
       run: |
-        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created."}' ${{ secrets.SLACK_WEBHOOK_URL }}
+        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created. Please merge the changes."}' ${{ secrets.SLACK_WEBHOOK_URL }}
