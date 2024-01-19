@@ -72,4 +72,4 @@ jobs:
     - name: Notify on Slack
       if: success()
       run: |
-        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created."}' ${{ secrets.SLACK_WEB_HOOK_URL }}
+        curl -X POST -H 'Content-type: application/json' --data '{"text":"Package published to Production."}' ${{ secrets.SLACK_WEB_HOOK_URL }}
