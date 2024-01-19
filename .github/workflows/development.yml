@@ -83,6 +83,15 @@ jobs:
           github_token: ${{ secrets.UGITHUB_TOKEN }}
           pr_label: "feature, automated pr"
           pr_title: "Pull Request From Github Action"
+          debug: true  # Enable debugging output
+  
+      - name: pull-request
+        uses: repo-sync/pull-request@v2
+        with:
+          destination_branch: "main"
+          github_token: ${{ secrets.UGITHUB_TOKEN }}
+          pr_label: "feature, automated pr"
+          pr_title: "Pull Request From Github Action"
   
   # "notify" workflow for slack notification
   notify_slack:
