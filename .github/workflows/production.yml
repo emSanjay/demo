@@ -62,3 +62,14 @@ jobs:
       - name: Publish Nuget Package to DEV
         shell: pwsh
         run: ${{ github.workspace }}\scripts\UiPathDeploy.ps1 ${{ github.workspace }}\package ${{env.ORCH_URL}} ${{env.ORCH_TENANT}} -UserKey ${{env.ORCH_USER_KEY}} -account_name ${{env.ORCH_ACC_NAME}}
+
+  notify_slack:
+    runs-on: ubuntu-latest
+    # Only run this workflow when "build" workflow succeeds
+    needs: publish-uipath-nuget-package
+    # Only run this workflow if it target is main branch on pull_request event
+    steps:
+    - name: Notify on Slack
+      if: success()
+      run: |
+        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created."}' ${{ secrets.SLACK_WEB_HOOK_URL }}
