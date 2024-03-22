@@ -1,1 +1,125 @@
+name: Development workflow
 
+on:
+  push:
+    branches:
+      - development
+
+# Here the environment variable is declared in workflow level
+env:
+  # Replace with your Orchestrator Values 
+  PROJECT_NAME: uipath.github.action                         
+  PROJECT_FOLDER: ${{ github.action_path }}
+  ORCH_URL: https://cloud.uipath.com
+  ORCH_TENANT: ${{ secrets.UIPATHTENANTNAME }}
+  ORCH_CLIENT_ID: ${{ secrets.UIPATHCLIENTID }}
+  ORCH_USER_KEY: ${{ secrets.UIPATHUSERKEY }}
+  ORCH_ACC_NAME: ${{ secrets.UIPATHACCOUNTNAME }}
+
+jobs:
+  print-details:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo-default-env-variables
+        run: |
+          echo "Home: ${HOME}"
+          echo "GITHUB_WORKFLOW: ${GITHUB_WORKFLOW}"
+          echo "GITHUB_ACTIONS: ${GITHUB_ACTIONS}"
+          echo "GITHUB_ACTOR: ${GITHUB_ACTOR}"
+          echo "GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}"
+          echo "GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}"
+          echo "GITHUB_WORKSPACE: ${GITHUB_WORKSPACE}"
+          echo "GITHUB_SHA: ${GITHUB_SHA}"
+          echo "GITHUB_REF: ${GITHUB_REF}"
+  cleaner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner workspace path
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf "${{ github.workspace }}"
+
+  build-uipath-nuget-package:
+    # You should be able to run on windows 2019 or windows latest
+    needs: cleaner
+    runs-on: windows-latest
+    steps: 
+      - name: Check out repository code
+        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+        uses: actions/checkout@v2
+      - name: Build Nuget Package
+        shell: pwsh
+        run: ${{ github.workspace }}\scripts\UiPathPack.ps1 ${{ github.workspace }}\project.json -destination_folder ${{ github.workspace }}\package -autoVersion
+      - name: Upload UiPath Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts
+          path: |
+           package/*.*
+           scripts/*.ps1
+  publish-uipath-nuget-package:
+    needs: build-uipath-nuget-package
+    runs-on: windows-latest
+    steps: 
+      - name: Download UiPath Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: Artifacts
+      - name: Publish Nuget Package to DEV
+        shell: pwsh
+        run: ${{ github.workspace }}\scripts\UiPathDeploy.ps1 ${{ github.workspace }}\package ${{env.ORCH_URL}} ${{env.ORCH_TENANT}} -UserKey ${{env.ORCH_USER_KEY}} -account_name ${{env.ORCH_ACC_NAME}}
+   
+  # Create Pull Request for Merge & Review
+  create-pull-request:
+          runs-on: ubuntu-latest
+          needs: publish-uipath-nuget-package
+          steps:
+            - name: Check out repository code
+              uses: actions/checkout@v2
+
+            - name: Create Pull Request
+              run: |
+                GITHUB_TOKEN="${{ secrets.UGITHUB_TOKEN }}"
+                BASE_BRANCH="main"
+                HEAD_BRANCH="development"
+                PR_TITLE="Pull Request From Github Action"
+                PR_BODY="Automated pull request created by GitHub Actions"
+
+                # Create a pull request using GitHub API
+                curl -X POST \
+                  -H "Authorization: token $GITHUB_TOKEN" \
+                  -H "Accept: application/vnd.github.v3+json" \
+                  https://api.github.com/repos/${{ github.repository }}/pulls \
+                  -d @- <<EOF
+                {
+                  "title": "$PR_TITLE",
+                  "body": "$PR_BODY",
+                  "head": "$HEAD_BRANCH",
+                  "base": "$BASE_BRANCH"
+                }
+                EOF
+
+  
+  # "notify" workflow for slack notification
+  notify_slack:
+    runs-on: ubuntu-latest
+    # Only run this workflow when "build" workflow succeeds
+    needs: create-pull-request
+    # Only run this workflow if it target is main branch on pull_request event
+    steps:
+    - name: Notify on Slack
+      if: always()
+      run: |
+        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created. Please merge the changes."}' ${{ secrets.SLACK_WEBHOOK_URL }}
+  
+  
+  slack_notifier:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Send notifications on slack using webhookst
+          if: always()
+          uses: slackapi/slack-github-action@v1.25.0
+          with:
+            status: ${{ job.status}}
+            text: "Git push done in the repo : repo-automation"
+          env: ${{secrets.SLACK_WEBHOOK_URL }}
