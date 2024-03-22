@@ -122,4 +122,4 @@ jobs:
           with:
             status: ${{ job.status}}
             text: "Git push done in the repo : repo-automation"
-          env: ${{secrets.SLACK_WEBHOOK_URL }}
+            webhook-url: ${{secrets.SLACK_WEBHOOK_URL }}
