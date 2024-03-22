@@ -123,4 +123,4 @@ jobs:
               {
                 "text": "Git push done in the repo : repo-automation"
               }
-            channel-id: ${{secrets.SLACK_WEBHOOK_URL }}
+            webhook_url: ${{secrets.SLACK_WEBHOOK_URL }}
