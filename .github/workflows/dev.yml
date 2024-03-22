@@ -116,10 +116,10 @@ jobs:
   slack_notifier:
       runs-on: ubuntu-latest
       steps:
-        - name: Send notifications on slack using webhookst
-          if: always()
-          uses: slackapi/slack-github-action@v1.25.0
-          with:
-            status: ${{ job.status}}
-            text: "Git push done in the repo : repo-automation"
-            webhook-url: ${{secrets.SLACK_WEBHOOK_URL }}
+      - uses: craftech-io/slack-action@v1
+        with:
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          slack_channel: general
+          slack_username: Github
+          status: failure
+        if: failure()
