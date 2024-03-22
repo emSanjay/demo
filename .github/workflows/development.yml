@@ -123,3 +123,4 @@ jobs:
               {
                 "text": "Git push done in the repo : repo-automation"
               }
+            bot_token: ${{secrets.SLACK_WEBHOOK_URL }}
