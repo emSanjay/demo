@@ -112,13 +112,8 @@ jobs:
       run: |
         curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created. Please merge the changes."}' ${{ secrets.SLACK_WEBHOOK_URL }}
   
-  name: test-slack-gha
-  on:
-    push:
-      branches:
-        - development
-  jobs:
-    slack_notifier:
+  
+  slack_notifier:
       runs-on: ubuntu-latest
       steps:
         - name: Send notifications on slack using webhookst
@@ -128,5 +123,3 @@ jobs:
               {
                 "text": "Git push done in the repo : repo-automation"
               }
-           env:
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
