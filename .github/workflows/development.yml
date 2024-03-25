@@ -108,19 +108,6 @@ jobs:
     # Only run this workflow if it target is main branch on pull_request event
     steps:
     - name: Notify on Slack
-      if: success()
+      if: always()
       run: |
-        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created. Please merge the changes."}' ${{ secrets.SLACK_WEBHOOK_URL }}
-  
-  
-  slack_notifier:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Send notifications on slack using webhookst
-          uses: slackapi/slack-github-action@v1.25.0
-          with:
-            payload: |
-              {
-                "text": "Git push done in the repo : repo-automation"
-              }
-            run: ${{secrets.SLACK_WEBHOOK_URL }}
+        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created. ${{ job.status }} ${{ toJson(steps) }}."}' ${{ secrets.SLACK_URL }}
