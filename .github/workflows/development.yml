@@ -106,3 +106,12 @@ jobs:
           steps: ${{ toJson(steps) }}
           channel: 'general'
         if: always()
+      - name: Send notifications on slack using webhooks
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "Git push done in the repo : repo-automation"
+            }
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_URL }}
