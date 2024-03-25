@@ -15,10 +15,11 @@ env:
   ORCH_CLIENT_ID: ${{ secrets.UIPATHCLIENTID }}
   ORCH_USER_KEY: ${{ secrets.UIPATHUSERKEY }}
   ORCH_ACC_NAME: ${{ secrets.UIPATHACCOUNTNAME }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_URL }}
 
 jobs:
-  build-process:
-    runs-on: windows-latest
+  print-details:
+    runs-on: ubuntu-latest
     steps:
       - name: echo-default-env-variables
         run: |
@@ -37,6 +38,11 @@ jobs:
           echo "Cleaning up previous run"
           rm -rf "${{ github.workspace }}"
 
+  build-uipath-nuget-package:
+    # You should be able to run on windows 2019 or windows latest
+    needs: print-details
+    runs-on: windows-latest
+    steps: 
       - name: Check out repository code
         # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
         uses: actions/checkout@v2
@@ -58,7 +64,9 @@ jobs:
       - name: Publish Nuget Package to DEV
         shell: pwsh
         run: ${{ github.workspace }}\scripts\UiPathDeploy.ps1 ${{ github.workspace }}\package ${{env.ORCH_URL}} ${{env.ORCH_TENANT}} -UserKey ${{env.ORCH_USER_KEY}} -account_name ${{env.ORCH_ACC_NAME}}
- 
+   
+  # Create Pull Request for Merge & Review
+  
       - name: Check out repository code
         uses: actions/checkout@v2
 
@@ -83,13 +91,7 @@ jobs:
                   "base": "$BASE_BRANCH"
                 }
                 EOF
-
-  
-  # "notify" workflow for slack notification
       - name: Notify on Slack
-        uses: act10ns/slack@v1
-        with:
-          status: ${{ job.status }}
-          steps: ${{ toJson(steps) }}
-          channel: '#rpa'
         if: always()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created. ${{ job.status }} ${{ toJson(steps) }}."}' ${{ secrets.SLACK_URL }}
