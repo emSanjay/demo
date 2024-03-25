@@ -92,6 +92,9 @@ jobs:
                 }
                 EOF
       - name: Notify on Slack
+        uses: craftech-io/slack-action@v1
+        with:
+          slack_webhook_url: ${{ secrets.SLACK_URL }}
+          slack_channel: general
+          slack_username: Github
         if: always()
-        run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull request created. ${{ job.status }} ${{ toJson(steps) }}."}' ${{ secrets.SLACK_URL }}
